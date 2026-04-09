@@ -6,14 +6,10 @@ jobs:
     build:
        runs-on: ubuntu-latest
        steps:
-         - name: Uptime
-           run: uptime
-         - name: number of processor
-           run: nproc 
+         - name: Check out code
+           uses: actions/checkout@v4
+         - name: Build Image
+           run:  docker build -t dkflora/appfolio .
+         - name: List Images
+           run:  docker images
            
-    test:
-         needs: [build]
-         runs-on: ubuntu-latest
-         steps:
-            - name: Hello
-              run: echo "Hello World"
