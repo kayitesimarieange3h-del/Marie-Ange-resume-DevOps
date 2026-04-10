@@ -35,4 +35,5 @@ jobs:
               key: ${{ secrets.PRIVATE_KEY }}
               script: |
                  docker rm -f appfolio || echo "Container not found, skipping removal."
+                 docker rmi -f ${{secrets.DOCKER_USERNAME}}/appfolio || echo "Image do not exit."
                  docker run -d --name appfolio -p 8080:80 ${{secrets.DOCKER_USERNAME}}/appfolio 
