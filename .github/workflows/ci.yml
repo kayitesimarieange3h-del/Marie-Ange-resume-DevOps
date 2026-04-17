@@ -1,39 +1,48 @@
-name: CICD
+name: CI/CD - Resufolio
 
 on:
-    push
-jobs:
-    build:
-       runs-on: ubuntu-latest
-       steps:
-         - name: Check out code
-           uses: actions/checkout@v4
-         - name: Build Image
-           run:  |
-              docker build -t ${{secrets.DOCKER_USERNAME}}/appfolio:${{github.run_number}} .
-              docker build -t ${{secrets.DOCKER_USERNAME}}/appfolio .
-         - name: Docker login to DockerHub
-           uses: docker/login-action@v4
-           with:
-              username: ${{secrets.DOCKER_USERNAME}}
-              password: ${{secrets.DOCKER_PASSWORD}}
-              
-         - name: Push Image to DockerHub
-           run: |
-              docker push ${{secrets.DOCKER_USERNAME}}/appfolio:${{github.run_number}}  
-              docker push ${{secrets.DOCKER_USERNAME}}/appfolio   
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-    deploy:
-       needs: build
-       runs-on: ubuntu-latest
-       steps:
-          - name: SSh into Linux and run container
-            uses: appleboy/ssh-action@v1
-            with:
-              host: ${{ secrets.HOST }}
-              username: ${{ secrets.SSH_USERNAME }}
-              key: ${{ secrets.PRIVATE_KEY }}
-              script: |
-                 docker rm -f appfolio || echo "Container not found, skipping removal."
-                 docker rmi -f ${{secrets.DOCKER_USERNAME}}/appfolio || echo "Image do not exit."
-                 docker run -d --name appfolio -p 8080:80 ${{secrets.DOCKER_USERNAME}}/appfolio 
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t resune:ci .
+
+      # Add tests here if you have them
+      # - name: Run tests
+      #   run: npm test
+
+  build-and-push-image:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD}}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/resune:latest
