@@ -1,20 +1,6 @@
-# Dockerfile
-FROM node:20-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install --only=production
-
-COPY . .
-
-EXPOSE 3000
-
-CMD ["npm", "start"]
-# Dockerfile
-FROM nginx:alpine
-
-COPY index.html /usr/share/nginx/html/index.html
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+FROM httpd
+COPY ./index.html /usr/local/apache2/htdocs
+COPY ./myImage.png /usr/local/apache2/htdocs
+RUN apt update
+RUN apt install ansible -y
+EXPOSE 85 
